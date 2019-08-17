@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\GoodsModel;
+use Illuminate\Support\Facades\Redis;
 class GoodsController extends Controller
 {
     public function goodscreate()
@@ -37,7 +38,51 @@ class GoodsController extends Controller
     }
     public function goodslist()
     {
-        $data=GoodsModel::paginate(3);
+        $data=GoodsModel::get()->toArray();
+        //展示查缓存
+        foreach ($data as $k=>$v){
+            $key="h:goods_info:".$v['goods_id'];
+            echo $key;echo '</br>';
+            Redis::hMset($key,$v);
+        }
         return view('goods/goodslist',['data'=>$data]);
+    }
+    public function goodsdel($goods_id)
+    {
+        $goods_id = intval($goods_id);
+        if(!$goods_id){
+            return;
+        }
+        $res = GoodsModel::where(['goods_id'=>$goods_id])->delete();
+        //删除更新缓存
+        $key="h:goods_info:".$goods_id;
+        Redis::del($key);
+        if($res){
+            return redirect('/goodslist');
+        }
+    }
+    public function goodsedit($goods_id)
+    {
+        $goods_id = intval($goods_id);
+        if(!$goods_id){
+            return;
+        }
+        $res = GoodsModel::where(['goods_id'=>$goods_id])->first();
+        return view('goods/goodsedit',['res'=>$res]);
+    }
+    public function goodsupdate(Request $request,$goods_id)
+    {
+        $goods_id = intval($goods_id);
+        if(!$goods_id){
+            return;
+        }
+        $data=$request->only(['goods_name','goods_num','self_price','goods_up']);
+        $res=GoodsModel::where(['goods_id'=>$goods_id])->update($data);
+        //修改更新缓存
+        $key="h:goods_info:".$goods_id;
+        Redis::hMset($key,$data);
+        if($res){
+            return redirect('/goodslist');
+        }
     }
 }

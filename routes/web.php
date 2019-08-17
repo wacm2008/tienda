@@ -22,7 +22,9 @@ Route::get('/merlogout', 'MercanteController@merlogout');
 Route::get('/goodscreate','GoodsController@goodscreate')->middleware('checkLogin');
 Route::post('/goodsdo','GoodsController@goodsdo');
 Route::get('/goodslist','GoodsController@goodslist');
-
+Route::get('/goodsdel/{goods_id}','GoodsController@goodsdel');
+Route::get('/goodsedit/{goods_id}','GoodsController@goodsedit');
+Route::post('/goodsupdate/{goods_id}','GoodsController@goodsupdate');
 
 Auth::routes();
 
